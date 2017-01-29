@@ -2,6 +2,8 @@ package soundifya.underground_architects.com.testsound;
 
 import android.content.Context;
 import android.net.Uri;
+import android.support.annotation.MainThread;
+import android.util.Log;
 
 import com.h6ah4i.android.media.IBasicMediaPlayer;
 
@@ -20,16 +22,10 @@ public class PlayerControls {
 
     public static void prepareData(final Context context)
     {
-        MainActivity.mediaPlayer.setOnPreparedListener(new IBasicMediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(IBasicMediaPlayer mp) {
-                MainActivity.isPreparing = false;
-                MainActivity.mediaPlayer.start();
-            }
-        });
         try {
             if(!MainActivity.isPreparing) {
                 MainActivity.isPreparing = true;
+                Log.d("XXX", "[" + MainActivity.nowIndex + "] prepareAsync()");
                 MainActivity.mediaPlayer.prepareAsync();
             }
             else

@@ -14,8 +14,10 @@ import android.widget.TextView;
 import com.h6ah4i.android.media.IBasicMediaPlayer;
 import com.h6ah4i.android.media.IMediaPlayerFactory;
 import com.h6ah4i.android.media.hybrid.HybridMediaPlayerFactory;
+import com.h6ah4i.android.media.opensl.OpenSLMediaPlayerFactory;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 static ArrayList<AudioModel> audioData;
@@ -34,10 +36,49 @@ static ArrayList<AudioModel> audioData;
     }
 
     private void createMediaPlayer() {
-        if(factory==null)
+        if(factory==null) {
             factory = new HybridMediaPlayerFactory(getApplicationContext());
+//            factory = new OpenSLMediaPlayerFactory(getApplicationContext());
+        }
         mediaPlayer = factory.createMediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setOnPreparedListener(new IBasicMediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(IBasicMediaPlayer mp) {
+                isPreparing = false;
+                Log.d("XXX", "[" + nowIndex + "] onPrepared()");
+                mediaPlayer.start();
+            }
+        });
+        mediaPlayer.setOnCompletionListener(new IBasicMediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(IBasicMediaPlayer mp) {
+                long delay = (new Random()).nextInt(2000);
+
+                Log.d("XXX", "[" + nowIndex + "] onCompletion(); delay = " + delay);
+                getWindow().getDecorView().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        nextSong(null);
+                    }
+                }, delay);
+            }
+        });
+        mediaPlayer.setOnErrorListener(new IBasicMediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(IBasicMediaPlayer mp, int what, int extra) {
+                Log.d("XXX", "[" + nowIndex + "] onError(what = " + what + ", extra = " + extra + ")");
+                return false;
+            }
+        });
+        mediaPlayer.setOnInfoListener(new IBasicMediaPlayer.OnInfoListener() {
+            @Override
+            public boolean onInfo(IBasicMediaPlayer mp, int what, int extra) {
+                Log.d("XXX", "[" + nowIndex + "] onInfo(what = " + what + ", extra = " + extra + ")");
+                return false;
+            }
+        });
+
         handleAudioData();
     }
 
@@ -73,48 +114,53 @@ static ArrayList<AudioModel> audioData;
                         String data = cursor.getString(cursor
                                 .getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
                         if (data != null) {
-                            long albumId = cursor.getLong(cursor
-                                    .getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID));
-                            long duration = cursor.getLong(cursor
-                                    .getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION));
-                            String year = String.valueOf(cursor.getInt(cursor
-                                    .getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)));
-                            String tracknum = String.valueOf(cursor.getInt(cursor
-                                    .getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)));
-                            String displayname = cursor.getString(cursor
-                                    .getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME));
-                            String composer = cursor.getString(cursor
-                                    .getColumnIndexOrThrow(MediaStore.Audio.Media.COMPOSER));
-                            long artistId = cursor.getLong(cursor
-                                    .getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID));
-                            long trackID = cursor.getLong(cursor
-                                    .getColumnIndexOrThrow(MediaStore.Audio.Media._ID));
-                            if (artist == null || artist.equalsIgnoreCase("") || artist.equalsIgnoreCase("<unknown>")) {
-                                artist = "Unknown Artist";
+                            if (data.endsWith("brown_noise_5sec.wav")) {
+                                for (int i = 0; i < 100; i++) {
+                                    long albumId = cursor.getLong(cursor
+                                            .getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID));
+                                    long duration = cursor.getLong(cursor
+                                            .getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION));
+                                    String year = String.valueOf(cursor.getInt(cursor
+                                            .getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)));
+                                    String tracknum = String.valueOf(cursor.getInt(cursor
+                                            .getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)));
+                                    String displayname = cursor.getString(cursor
+                                            .getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME));
+                                    String composer = cursor.getString(cursor
+                                            .getColumnIndexOrThrow(MediaStore.Audio.Media.COMPOSER));
+                                    long artistId = cursor.getLong(cursor
+                                            .getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID));
+                                    long trackID = cursor.getLong(cursor
+                                            .getColumnIndexOrThrow(MediaStore.Audio.Media._ID));
+                                    if (artist == null || artist.equalsIgnoreCase("") || artist.equalsIgnoreCase("<unknown>")) {
+                                        artist = "Unknown Artist";
+                                    }
+                                    if (album == null || album.equalsIgnoreCase("") || album.equalsIgnoreCase("<unknown>")) {
+                                        album = "Unknown Album";
+                                    }
+                                    AudioModel audioModel = new AudioModel();
+                                    audioModel.setArtist(artist);
+                                    audioModel.setAlbum(album);
+                                    audioModel.setTitle(title);
+                                    audioModel.setData(data);
+                                    audioModel.setDuration(duration);
+                                    audioModel.setYear(year);
+                                    if (tracknum.length() == 4) {
+                                        audioModel.setTracknum(String.valueOf(Integer.parseInt(tracknum.substring(1, 4))));
+                                        audioModel.setDisknum(tracknum.substring(0, 1));
+                                    } else if (tracknum.length() < 4) {
+                                        audioModel.setTracknum(String.valueOf(Integer.parseInt(tracknum)));
+                                    }
+                                    audioModel.setDisplayname(displayname);
+                                    audioModel.setComposer(composer);
+                                    audioModel.setAlbumId(albumId);
+                                    audioModel.setTrackId(trackID);
+                                    audioModel.setArtistId(artistId);
+                                    audioModel.setTrackIndex(audioarray.size());
+
+                                    audioarray.add(audioModel);
+                                }
                             }
-                            if (album == null || album.equalsIgnoreCase("") || album.equalsIgnoreCase("<unknown>")) {
-                                album = "Unknown Album";
-                            }
-                            AudioModel audioModel = new AudioModel();
-                            audioModel.setArtist(artist);
-                            audioModel.setAlbum(album);
-                            audioModel.setTitle(title);
-                            audioModel.setData(data);
-                            audioModel.setDuration(duration);
-                            audioModel.setYear(year);
-                            if (tracknum.length() == 4) {
-                                audioModel.setTracknum(String.valueOf(Integer.parseInt(tracknum.substring(1, 4))));
-                                audioModel.setDisknum(tracknum.substring(0, 1));
-                            } else if (tracknum.length() < 4) {
-                                audioModel.setTracknum(String.valueOf(Integer.parseInt(tracknum)));
-                            }
-                            audioModel.setDisplayname(displayname);
-                            audioModel.setComposer(composer);
-                            audioModel.setAlbumId(albumId);
-                            audioModel.setTrackId(trackID);
-                            audioModel.setArtistId(artistId);
-                            audioModel.setTrackIndex(audioarray.size());
-                            audioarray.add(audioModel);
                         }
                     }
                 }
@@ -123,15 +169,21 @@ static ArrayList<AudioModel> audioData;
                         cursor.close();
                 }
 
-                MainActivity.audioData = audioarray;
-                MainActivity.nowAudioModel = MainActivity.audioData.get(nowIndex);
-                ((TextView) findViewById(R.id.name)).setText(MainActivity.nowAudioModel.getTitle());
-                ((TextView) findViewById(R.id.data)).setText(MainActivity.nowAudioModel.getData());
-                PlayerControls.changeSong(getApplicationContext());
-                double trackTime = (System.currentTimeMillis() - currentTime)/1000;
-                totaltime = totaltime + trackTime;
-                System.out.println("Track time "+trackTime);
-                Log.i("Soundifya", "Total Tracks :" + audioarray.size());
+
+                getWindow().getDecorView().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        MainActivity.audioData = audioarray;
+                        MainActivity.nowAudioModel = MainActivity.audioData.get(nowIndex);
+                        ((TextView) findViewById(R.id.name)).setText(MainActivity.nowAudioModel.getTitle());
+                        ((TextView) findViewById(R.id.data)).setText(MainActivity.nowAudioModel.getData());
+                        PlayerControls.changeSong(getApplicationContext());
+                        double trackTime = (System.currentTimeMillis() - currentTime)/1000;
+                        totaltime = totaltime + trackTime;
+                        System.out.println("Track time "+trackTime);
+                        Log.i("Soundifya", "Total Tracks :" + audioarray.size());
+                    }
+                });
             }
         }).start();
     }

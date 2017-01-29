@@ -27,30 +27,34 @@
         android:layout_below="@id/name"
         android:id="@+id/data"
         />
+
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        >
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true">
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
         android:src="@drawable/ic_skip_previous_black_24dp"
         android:id="@+id/backward"
-        android:onClick="previousSong" />
+        android:onClick="previousSong"
+        android:background="?attr/selectableItemBackgroundBorderless"/>
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
         android:src="@drawable/ic_pause_black_24dp"
         android:layout_toRightOf="@id/backward"
         android:id="@+id/playpause"
-        android:onClick="playPause" />
+        android:onClick="playPause"
+        android:background="?attr/selectableItemBackgroundBorderless"/>
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
         android:src="@drawable/ic_skip_next_black_24dp"
         android:layout_toRightOf="@id/playpause"
         android:id="@+id/forward"
-        android:onClick="nextSong" />
+        android:onClick="nextSong"
+        android:background="?attr/selectableItemBackgroundBorderless"/>
         </RelativeLayout>
 </RelativeLayout>
